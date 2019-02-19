@@ -1,0 +1,34 @@
+server {
+	listen   80 default;
+    server_name  tool.114la.com;
+
+    root   /www/tool.115.com/;
+    
+	location / {
+		index  index.php index.html index.htm;
+	}
+    
+    rewrite "^/(?!(favicon.ico|robots.txt|rate.xml|postcode1.xml|postcode2.xml|postcode3.xml|citypostcode1.xml|citypostcode2.xml|citypostcode3.xml|postcodelist.xml|postcode.xml|citypostcode.xml|history/|static/|tianqi\/[\d]*/|huoche/|admin/|api/|nginx_status|dynamic/|stat/|.+\.html$|index\.php$|$)).*"  /index.php break;
+    
+	location ~ \.php$ {
+		try_files $uri /404.html;
+		fastcgi_pass   127.0.0.1:9000;
+		fastcgi_index  index.php;
+		fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+		include /etc/nginx/fastcgi_params;
+	}
+	
+    location ~ \.(htm|html|gif|jpg|jpeg|png|bmp|ico|css|js|txt)$ {
+         expires 24h;
+    }
+    
+	error_page  404  /404.html;
+    error_page  403  /403.html;
+    error_page   500 502 503 504  /503.html;
+}
+
+server {
+	listen 80;
+	server_name tool.115.com;
+	rewrite ^/(.*) http://tool.114la.com/$1 permanent;
+}

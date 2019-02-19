@@ -1,0 +1,85 @@
+#! /bin/sh
+
+### BEGIN INIT INFO
+# chkconfig: 2345 20 80
+# Provides:          nginx
+# Required-Start:    $all
+# Required-Stop:     $all
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: starts the nginx web server
+# Description:       starts nginx using start-stop-daemon
+### END INIT INFO
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/sbin/nginx
+NAME=nginx
+DESC=nginx
+
+test -x $DAEMON || exit 0
+
+# Include nginx defaults if available
+if [ -f /etc/default/nginx ] ; then
+	. /etc/default/nginx
+fi
+
+set -e
+
+case "$1" in
+  start)
+	echo -n "Starting $DESC: "
+
+	start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid --exec $DAEMON -- $DAEMON_OPTS
+
+	if ! pidof php-fpm; then
+             php-fpm -y /etc/php/php-fpm.ini -c /etc/php/php.ini	
+	fi
+
+	echo "$NAME."
+
+	;;
+  stop)
+	echo -n "Stopping $DESC: "
+
+    if pidof php-fpm; then
+        pkill -9 php-fpm
+        sleep 5
+    fi
+	
+	start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid --exec $DAEMON
+    
+	echo "$NAME."
+	;;
+  restart|force-reload)
+	echo -n "Restarting $DESC: "
+	
+	if pidof php-fpm; then
+        pkill -9 php-fpm
+        sleep 5
+    fi
+	start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid --exec $DAEMON
+	
+	sleep 3
+    if ! pidof php-fpm; then
+        php-fpm -y /etc/php/php-fpm.ini -c /etc/php/php.ini
+    fi
+	
+	start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid --exec $DAEMON -- $DAEMON_OPTS
+	
+	echo "$NAME."
+	;;
+  reload)
+      echo -n "Reloading $DESC configuration: "
+      
+      start-stop-daemon --stop --signal HUP --quiet --pidfile /var/run/$NAME.pid --exec $DAEMON
+      
+      echo "$NAME."
+      ;;
+  *)
+	N=/etc/init.d/$NAME
+	echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

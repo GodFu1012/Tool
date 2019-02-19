@@ -1,0 +1,62 @@
+#one web config
+#rewrite
+server {
+    server_name ylmf.com;
+    rewrite ^/(.*) http://www.ylmf.com/$1 permanent;
+}
+#include
+server {
+    listen   80 ;
+    server_name  www.ylmf.com;
+    root /www/test_web/;
+    include /etc/nginx/site_base.conf;
+    #include /etc/nginx/fastcgi_pathinfo; # use for ci pathinfo
+}
+#default
+server {
+        listen    80;
+        server_name    test.backup.ylmf.com;
+        access_log off;
+        #combined 是默认的
+        #access_log /var/log/nginx/1do_access.log combined;
+        # 遇到 favicon.ico 关闭日志
+        #location = /favicon.ico {  
+        #    log_not_found off;  
+        #} 
+        
+        root    /www/test_web/;
+
+        location / {
+            index   index.html index.htm index.php;
+        }
+            
+        location /nginx_status {
+            stub_status on;
+            access_log off;
+        }
+            
+        location ~ ^(.*)/data/(.*)\.(php|inc) {
+            deny all;
+            break;
+        }
+
+        location ~ /(data|templates|uploads)/.*\.(php|php5)?$ {
+            deny all;
+        }
+            
+        location ~ \.php$ {
+            #try_files $uri /404.html;
+            fastcgi_pass    127.0.0.1:9000;
+            fastcgi_index   index.php;
+            fastcgi_param   SCRIPT_FILENAME   $document_root$fastcgi_script_name;
+            include /etc/nginx/fastcgi_params;
+        }
+            
+        location ~ \.(htm|html|gif|jpg|jpeg|png|bmp|ico|css|js|txt)$ {
+            expires 24h;
+        }
+            
+        error_page   404   /404.html;
+        error_page   403   /403.html;
+        error_page    500 502 503 504   /50x.html;            
+}       

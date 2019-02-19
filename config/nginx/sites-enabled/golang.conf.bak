@@ -1,0 +1,33 @@
+upstream frontends {
+    #ip_hash;
+    server 120.132.37.238:9527;
+    server 127.0.0.1:9001;
+}
+
+
+server {
+    listen   80 ;
+    server_name 120.132.35.238;
+    root /data/web/test/;
+    #gzip off;
+    #proxy_buffering off;
+
+    #location ~ /app.* {
+    #    fastcgi_pass   127.0.0.1:9001;
+    #    #fastcgi_pass   frontends;
+    #    fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+    #    include /etc/nginx/fastcgi_params;
+    #}
+
+    location ~ /app {
+        proxy_pass_header Server;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Scheme $scheme;
+        proxy_pass http://120.132.37.238:9527;
+        #proxy_pass http://frontends;
+    }
+
+    #include /etc/nginx/site_base.conf;
+}
